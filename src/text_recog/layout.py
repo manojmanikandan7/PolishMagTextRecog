@@ -34,7 +34,7 @@ class Word(Element):
 
     def get_text(self) -> str:
         """Get clean text from this word"""
-        return self.text.strip() if self.text else ""
+        return str(self.text).strip() if self.text else ""
 
 
 @dataclass

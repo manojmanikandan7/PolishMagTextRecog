@@ -1,5 +1,3 @@
-import json
-import random
 import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
@@ -24,16 +22,17 @@ class InteractiveTranscriber:
         self.blocks_listbox = None
         self.canvas = None
         self.file_label = None
+
         self.root = root
         self.root.title("Interactive Magazine Transcriber")
-        self.root.geometry("1200x800")
+        self.root.geometry("1200x1000")
 
         # Initialize variables
         self.current_image_path = None
         self.current_analyzer = None
         self.blocks_data = {}
         self.selected_blocks = set()
-        
+
         # Track OCR data
         self.ocr_data = None
 
@@ -46,7 +45,7 @@ class InteractiveTranscriber:
 
         self.setup_ui()
 
-    def setup_ui(self, load_sample: bool=True):
+    def setup_ui(self, load_sample: bool = True):
         """Setup the user interface"""
         # Main container
         main_frame = ttk.Frame(self.root)
@@ -57,9 +56,9 @@ class InteractiveTranscriber:
         control_frame.pack(fill=tk.X, pady=(0, 10))
 
         # File selection
-        ttk.Button(control_frame, text="Select Image Folder", command=self.select_image_dir).pack(
-            side=tk.LEFT, padx=(0, 5)
-        )
+        ttk.Button(
+            control_frame, text="Select Image Folder", command=self.select_image_dir
+        ).pack(side=tk.LEFT, padx=(0, 5))
 
         self.file_label = ttk.Label(control_frame, text="No file selected")
         self.file_label.pack(side=tk.LEFT, padx=(5, 0))
@@ -79,14 +78,14 @@ class InteractiveTranscriber:
         nav_frame = ttk.Frame(control_frame)
         nav_frame.pack(side=tk.RIGHT)
 
-        self.prev_button = ttk.Button(nav_frame, text="Previous", command=self.previous_image, state=tk.DISABLED)
-        self.next_button = ttk.Button(nav_frame, text="Next", command=self.next_image, state=tk.DISABLED)
-        self.prev_button.pack(
-            side=tk.LEFT, padx=2
+        self.prev_button = ttk.Button(
+            nav_frame, text="Previous", command=self.previous_image, state=tk.DISABLED
         )
-        self.next_button.pack(
-            side=tk.LEFT, padx=2
+        self.next_button = ttk.Button(
+            nav_frame, text="Next", command=self.next_image, state=tk.DISABLED
         )
+        self.prev_button.pack(side=tk.LEFT, padx=2)
+        self.next_button.pack(side=tk.LEFT, padx=2)
 
         # Content area
         content_frame = ttk.Frame(main_frame)
@@ -187,10 +186,16 @@ class InteractiveTranscriber:
         """
         Updates the nav buttons (previous and next) according the image's index
         """
-        self.prev_button["state"] = tk.NORMAL if self.current_image_index > 0 else tk.DISABLED
-        self.next_button["state"] = tk.NORMAL if self.current_image_index < len(self.image_files) - 1 else tk.DISABLED
+        self.prev_button["state"] = (
+            tk.NORMAL if self.current_image_index > 0 else tk.DISABLED
+        )
+        self.next_button["state"] = (
+            tk.NORMAL
+            if self.current_image_index < len(self.image_files) - 1
+            else tk.DISABLED
+        )
 
-    def load_images_from_dir(self, dir_path: Path=SAMPLES_DIR):
+    def load_images_from_dir(self, dir_path: Path = SAMPLES_DIR):
         """Load list of sample images"""
         if dir_path.exists():
             self.image_files = list(dir_path.glob("*.jpg"))
@@ -207,7 +212,7 @@ class InteractiveTranscriber:
         dir_path = filedialog.askdirectory(
             title="Select Magazine Image Directory",
             mustexist=True,
-            initialdir=Path.home()
+            initialdir=Path.home(),
         )
         if dir_path:
             self.load_images_from_dir(Path(dir_path))
@@ -254,10 +259,6 @@ class InteractiveTranscriber:
             messagebox.showerror("Error", f"Failed to load image: {str(e)}")
             self.status_var.set("Error loading image")
 
-
-
-
-        
     def generate_highlights(self) -> cv2.typing.MatLike | None:
         """Update highlights on the canvas for selected blocks"""
         if not self.blocks_data or self.original_image is None:
@@ -281,7 +282,7 @@ class InteractiveTranscriber:
                 y2 = block.top + block.height
 
                 # Create highlight rectangle with semi-transparent fill
-                cv2.rectangle(annotated,(x1,y1),(x2,y2),(80, 255, 128),cv2.FILLED)
+                cv2.rectangle(annotated, (x1, y1), (x2, y2), (80, 255, 128), cv2.FILLED)
         return annotated
 
     def update_image_display(self):
@@ -292,7 +293,9 @@ class InteractiveTranscriber:
         # Redraw highlights for selected blocks
         annotated = self.generate_highlights()
 
-        image_new = cv2.addWeighted(annotated, self.alpha, self.original_image, 1 - self.alpha, 0)
+        image_new = cv2.addWeighted(
+            annotated, self.alpha, self.original_image, 1 - self.alpha, 0
+        )
         img_rgb = Image.fromarray(cv2.cvtColor(image_new, cv2.COLOR_BGR2RGB))
 
         # Calculate new size based on zoom level
@@ -311,7 +314,6 @@ class InteractiveTranscriber:
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-
     def zoom_in(self):
         """Increase zoom level"""
         if self.original_image is not None:
@@ -327,37 +329,8 @@ class InteractiveTranscriber:
     def display_image_with_overlays(self):
         """Display image with block overlays"""
         # Create image with overlays
-        img_with_overlays = self.current_analyzer.image.copy()
-
-        # Generate colors for blocks
-        colors = [tuple(random.choices(range(50, 255), k=3)) for _ in range(20)]
-
-        for block_id, block in self.blocks_data.items():
-            if not block.get_text():
-                continue
-
-            color = colors[block_id % len(colors)]
-            cv2.rectangle(
-                img_with_overlays,
-                (int(block.left), int(block.top)),
-                (int(block.left + block.width), int(block.top + block.height)),
-                color,
-                2,
-            )
-
-            # Add block ID label
-            cv2.putText(
-                img_with_overlays,
-                f"B{block_id}",
-                (int(block.left), int(block.top) - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.75,
-                color,
-                2,
-            )
-
         # Store as original
-        self.original_image = img_with_overlays
+        self.original_image = self.current_analyzer.add_block_overlay(self.blocks_data)
 
         # Reset zoom level
         self.zoom_level = DEFAULT_ZOOM_LEVEL
@@ -408,7 +381,6 @@ class InteractiveTranscriber:
         # Update highlights on the image
         self.update_image_display()
 
-
     def generate_transcript(self):
         """Generate transcript from selected blocks"""
         if not self.current_image_path:
@@ -421,58 +393,20 @@ class InteractiveTranscriber:
             return
 
         try:
-            TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
-            # Collect text from selected blocks
-            transcript_data = {
-                # "source_image": str(self.current_image_path),
-                # "timestamp": datetime.now().isoformat(),
-                "selected_blocks": [],
-                "full_text": "",
-            }
-
-            all_text_parts = []
-
+            blocks = {}
             for index in selected_indices:
                 block_text = self.blocks_listbox.get(index)
                 block_id = int(block_text.split(":")[0].replace("Block ", ""))
-                block_content = self.blocks_data[block_id].get_text()
+                blocks[block_id] = self.blocks_data[block_id]
 
-                block_info = {
-                    "block_id": block_id,
-                    "preview": block_text.split(":", 1)[1].strip(),
-                    "full_text": block_content,
-                    "coordinates": {
-                        "left": self.blocks_data[block_id].left,
-                        "top": self.blocks_data[block_id].top,
-                        "width": self.blocks_data[block_id].width,
-                        "height": self.blocks_data[block_id].height,
-                    },
-                }
-
-                transcript_data["selected_blocks"].append(block_info)
-                all_text_parts.append(block_content)
-
-            transcript_data["full_text"] = "\n\n".join(all_text_parts)
-
-            # Save transcript
-            output_filename = f"{self.current_image_path.stem}_transcript.json"
-            output_path = TRANSCRIPTS_DIR / output_filename
-
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(transcript_data, f, ensure_ascii=False, indent=2)
-
-            # Also save as plain text
-            text_output_path = (
-                TRANSCRIPTS_DIR / f"{self.current_image_path.stem}_transcript.txt"
+            paths = self.current_analyzer.generate_transcript(
+                TRANSCRIPTS_DIR, blocks
             )
-            with open(text_output_path, "w", encoding="utf-8") as f:
-                f.write(f"Source: {self.current_image_path.name}\n")
-                # f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                # f.write("-" * 50 + "\n\n")
-                f.write(transcript_data["full_text"])
 
             messagebox.showinfo(
-                "Success", f"Transcript saved to:\n{output_path}\n{text_output_path}", icon="info"
+                "Success",
+                "Saved to:\n" + "\n".join([f"{key}: {value}" for key, value in paths.items()]),
+                icon="info",
             )
 
             self.status_var.set(f"Transcript saved for {self.current_image_path.name}")
