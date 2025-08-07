@@ -15,10 +15,10 @@ class TessLayout(Enum):
 @dataclass
 class Element(ABC):
     level: TessLayout
-    left: float
-    top: float
-    width: float
-    height: float
+    left: int
+    top: int
+    width: int
+    height: int
 
     @abstractmethod
     def get_text(self) -> str:

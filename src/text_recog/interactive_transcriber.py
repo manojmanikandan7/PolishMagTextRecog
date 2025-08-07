@@ -183,12 +183,12 @@ class InteractiveTranscriber:
         self.output_dir_label.pack(side=tk.LEFT, padx=(5, 0))
 
         # Action buttons
-        ttk.Button(
-            action_frame, text="Generate Transcript", command=self.generate_transcript
-        ).pack(side=tk.RIGHT, padx=5)
         ttk.Button(action_frame, text="Quit", command=self.quit_prog).pack(
             side=tk.RIGHT, padx=5
         )
+        ttk.Button(
+            action_frame, text="Generate Transcript", command=self.generate_transcript
+        ).pack(side=tk.RIGHT, padx=5)
 
         # Status bar
         self.status_var = tk.StringVar()
@@ -202,6 +202,9 @@ class InteractiveTranscriber:
             self.image_dir_path = SAMPLES_DIR
             # Initialize with sample images if available
             self.load_images_from_dir()
+        else:
+            # Initialize with home directory
+            self.image_dir_path = Path.home()
 
     def update_nav_button(self):
         """
@@ -275,12 +278,16 @@ class InteractiveTranscriber:
 
     def load_image(self, image_path):
         """Load and analyze an image"""
+        if self.status_var is None:
+            return
+
         self.status_var.set("Loading and analyzing image...")
         self.root.update()
 
         try:
             self.current_image_path = image_path
-            self.file_label.config(text=image_path.name)
+            if self.file_label is not None:
+                self.file_label.config(text=image_path.name)
 
             # Create analyzer and perform OCR
             self.current_analyzer = MagazineLayoutAnalyzer(image_path)
@@ -295,16 +302,22 @@ class InteractiveTranscriber:
             # Select all blocks by default
             self.select_all_blocks()
 
-            self.status_var.set(f"Loaded: {image_path.name}")
+            if self.status_var is not None:
+                self.status_var.set(f"Loaded: {image_path.name}")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load image: {str(e)}")
-            self.status_var.set("Error loading image")
+            if self.status_var is not None:
+                self.status_var.set("Error loading image")
 
     def generate_highlights(self) -> cv2.typing.MatLike | None:
         """Update highlights on the canvas for selected blocks"""
-        if not self.blocks_data or self.original_image is None:
-            return None
+        if (
+            not self.blocks_data
+            or self.original_image is None
+            or self.blocks_listbox is None
+        ):
+            return
 
         annotated = self.original_image.copy()
         # Get selected block indices
@@ -324,16 +337,19 @@ class InteractiveTranscriber:
                 y2 = block.top + block.height
 
                 # Create highlight rectangle with semi-transparent fill
-                cv2.rectangle(annotated, (x1, y1), (x2, y2), (80, 255, 128), cv2.FILLED)
+                cv2.rectangle(annotated, (x1, y1), (x2, y2), (203, 250, 50), cv2.FILLED)
         return annotated
 
     def update_image_display(self):
         """Update the image display with current zoom level"""
-        if self.original_image is None:
+        if self.original_image is None or self.canvas is None:
             return
 
         # Redraw highlights for selected blocks
         annotated = self.generate_highlights()
+
+        if annotated is None:
+            return
 
         image_new = cv2.addWeighted(
             annotated, self.alpha, self.original_image, 1 - self.alpha, 0
@@ -370,6 +386,9 @@ class InteractiveTranscriber:
 
     def display_image_with_overlays(self):
         """Display image with block overlays"""
+        if self.current_analyzer is None:
+            return
+
         # Create image with overlays
         # Store as original
         self.original_image = self.current_analyzer.add_block_overlay(self.blocks_data)
@@ -379,6 +398,9 @@ class InteractiveTranscriber:
 
     def populate_blocks_list(self):
         """Populate the blocks listbox with available blocks"""
+        if self.blocks_listbox is None:
+            return
+
         self.blocks_listbox.delete(0, tk.END)
 
         for block_id, block in self.blocks_data.items():
@@ -393,16 +415,23 @@ class InteractiveTranscriber:
 
     def select_all_blocks(self):
         """Select all blocks in the listbox"""
+        if self.blocks_listbox is None:
+            return
         self.blocks_listbox.select_set(0, tk.END)
         self.on_block_selection_change()
 
     def deselect_all_blocks(self):
         """Deselect all blocks in the listbox"""
+        if self.blocks_listbox is None:
+            return
         self.blocks_listbox.select_clear(0, tk.END)
         self.on_block_selection_change()
 
     def on_block_selection_change(self, event=None):
         """Handle block selection changes"""
+        if self.blocks_listbox is None or self.preview_text is None:
+            return
+
         selected_indices = self.blocks_listbox.curselection()
 
         if selected_indices:
@@ -424,6 +453,10 @@ class InteractiveTranscriber:
         """Generate transcript from selected blocks"""
         if not self.current_image_path:
             messagebox.showwarning("Warning", "No image loaded")
+            return
+
+        if self.blocks_listbox is None:
+            messagebox.showwarning("Warning", "UI not properly initialized")
             return
 
         selected_indices = self.blocks_listbox.curselection()
@@ -451,6 +484,10 @@ class InteractiveTranscriber:
                 block_id = int(block_text.split(":")[0].replace("Block ", ""))
                 blocks[block_id] = self.blocks_data[block_id]
 
+            if self.current_analyzer is None:
+                messagebox.showerror("Error", "No analyzer available")
+                return
+
             paths = self.current_analyzer.generate_transcript(
                 self.output_directory, blocks
             )
@@ -462,7 +499,10 @@ class InteractiveTranscriber:
                 icon="info",
             )
 
-            self.status_var.set(f"Transcript saved for {self.current_image_path.name}")
+            if self.status_var is not None:
+                self.status_var.set(
+                    f"Transcript saved for {self.current_image_path.name}"
+                )
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to generate transcript: {str(e)}")
