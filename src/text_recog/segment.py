@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Sequence
+from typing import Literal, Sequence, get_args
 
 import cv2
 import layout
@@ -173,28 +173,28 @@ class MagazineLayoutAnalyzer:
             json_output_dir.mkdir(exist_ok=True, parents=True)
             json_output_path = json_output_dir / f"{output_filename}.json"
             data_df.to_json(json_output_path, orient="records", indent=2)
-            paths[JSON] = json_output_path
+            paths[get_args(JSON)[0]] = json_output_path
 
         if CSV in formats:
             csv_output_dir = transcripts_dir / "csv"
             csv_output_dir.mkdir(exist_ok=True, parents=True)
             csv_output_path = csv_output_dir / f"{output_filename}.csv"
             data_df.to_csv(csv_output_path, index=False)
-            paths[CSV] = csv_output_path
+            paths[get_args(CSV)[0]] = csv_output_path
 
         if EXCEL in formats:
             excel_output_dir = transcripts_dir / "excel"
             excel_output_dir.mkdir(exist_ok=True, parents=True)
             excel_output_path = excel_output_dir / f"{output_filename}.xlsx"
             data_df.to_excel(excel_output_path)
-            paths[EXCEL] = excel_output_path
+            paths[get_args(EXCEL)[0]] = excel_output_path
 
         if TEXT in formats:
             text_output_dir = transcripts_dir / "text"
             text_output_dir.mkdir(exist_ok=True, parents=True)
             text_output_path = text_output_dir / f"{output_filename}.txt"
             text_output_path.open("w").write("\n\n".join(full_text))
-            paths[TEXT] = text_output_path
+            paths[get_args(TEXT)[0]] = text_output_path
 
         return paths
 

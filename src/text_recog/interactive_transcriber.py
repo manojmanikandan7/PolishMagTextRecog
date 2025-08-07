@@ -7,16 +7,14 @@ from PIL import Image, ImageTk
 
 from segment import MagazineLayoutAnalyzer
 
-SAMPLES_DIR = Path("../../samples/magazines")
-TRANSCRIPTS_DIR = Path("../../outputs/transcripts")
+SAMPLES_DIR = Path("samples/magazines")
 DEFAULT_ZOOM_LEVEL = 0.5
 
 
 class InteractiveTranscriber:
     def __init__(self, root):
+        # UI elements
         self.photo = None
-        self.current_image_index = None
-        self.image_files = None
         self.status_var = None
         self.preview_text = None
         self.blocks_listbox = None
@@ -29,6 +27,11 @@ class InteractiveTranscriber:
 
         # Initialize variables
         self.current_image_path = None
+        self.image_dir_path = None
+        self.current_image_index = -1
+        self.image_files = []
+
+        # OCR data
         self.current_analyzer = None
         self.blocks_data = {}
         self.selected_blocks = set()
@@ -42,6 +45,9 @@ class InteractiveTranscriber:
 
         # Highlight variables
         self.alpha = 0.5
+
+        # Output directory
+        self.output_directory = None
 
         self.setup_ui()
 
@@ -163,11 +169,25 @@ class InteractiveTranscriber:
         action_frame = ttk.Frame(main_frame)
         action_frame.pack(fill=tk.X, pady=(10, 0))
 
+        # Output directory selection
+        output_frame = ttk.Frame(action_frame)
+        output_frame.pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
+            output_frame, text="Select Output Directory", command=self.select_output_dir
+        ).pack(side=tk.LEFT, padx=(0, 5))
+
+        self.output_dir_label = ttk.Label(
+            output_frame, text="No output directory selected"
+        )
+        self.output_dir_label.pack(side=tk.LEFT, padx=(5, 0))
+
+        # Action buttons
         ttk.Button(
             action_frame, text="Generate Transcript", command=self.generate_transcript
-        ).pack(side=tk.LEFT, padx=5)
+        ).pack(side=tk.RIGHT, padx=5)
         ttk.Button(action_frame, text="Quit", command=self.quit_prog).pack(
-            side=tk.LEFT, padx=5
+            side=tk.RIGHT, padx=5
         )
 
         # Status bar
@@ -179,6 +199,7 @@ class InteractiveTranscriber:
         status_bar.pack(fill=tk.X, pady=(5, 0))
 
         if load_sample:
+            self.image_dir_path = SAMPLES_DIR
             # Initialize with sample images if available
             self.load_images_from_dir()
 
@@ -207,15 +228,36 @@ class InteractiveTranscriber:
             self.image_files = []
             self.current_image_index = -1
 
+    def update_output_dir_label(self):
+        """Update the output directory label with the given path"""
+        if self.output_directory is None:
+            self.output_dir_label.config(text="No output directory selected")
+            return
+
+        display_path = self.output_directory.absolute().as_posix()
+        self.output_dir_label.config(text=f"Output: {display_path}")
+
     def select_image_dir(self):
         """Open file dialog to select an image directory"""
-        dir_path = filedialog.askdirectory(
+        self.image_dir_path = filedialog.askdirectory(
             title="Select Magazine Image Directory",
             mustexist=True,
             initialdir=Path.home(),
         )
+        if self.image_dir_path:
+            self.load_images_from_dir(Path(self.image_dir_path))
+
+    def select_output_dir(self):
+        """Open file dialog to select an output directory"""
+        dir_path = filedialog.askdirectory(
+            title="Select Output Directory",
+            mustexist=False,
+            initialdir=self.image_dir_path,
+        )
         if dir_path:
-            self.load_images_from_dir(Path(dir_path))
+            self.output_directory = Path(dir_path)
+            # Update the label to show the selected directory
+            self.update_output_dir_label()
 
     def previous_image(self):
         """Load previous image in the list"""
@@ -332,9 +374,6 @@ class InteractiveTranscriber:
         # Store as original
         self.original_image = self.current_analyzer.add_block_overlay(self.blocks_data)
 
-        # Reset zoom level
-        self.zoom_level = DEFAULT_ZOOM_LEVEL
-
         # Update display
         self.update_image_display()
 
@@ -392,6 +431,19 @@ class InteractiveTranscriber:
             messagebox.showwarning("Warning", "No blocks selected")
             return
 
+        # Check if output directory is set, prompt if not
+        if self.output_directory is None:
+            dir_path = filedialog.askdirectory(
+                title="Select Output Directory for Transcript",
+                mustexist=False,
+                initialdir=self.image_dir_path,
+            )
+            if not dir_path:
+                return  # User cancelled
+            self.output_directory = Path(dir_path)
+            # Update the label
+            self.update_output_dir_label()
+
         try:
             blocks = {}
             for index in selected_indices:
@@ -400,12 +452,13 @@ class InteractiveTranscriber:
                 blocks[block_id] = self.blocks_data[block_id]
 
             paths = self.current_analyzer.generate_transcript(
-                TRANSCRIPTS_DIR, blocks
+                self.output_directory, blocks
             )
 
             messagebox.showinfo(
                 "Success",
-                "Saved to:\n" + "\n".join([f"{key}: {value}" for key, value in paths.items()]),
+                "Saved to:\n"
+                + "\n".join([f"{key}: {value}" for key, value in paths.items()]),
                 icon="info",
             )
 
