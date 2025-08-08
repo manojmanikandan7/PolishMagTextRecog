@@ -2,10 +2,11 @@ from pathlib import Path
 from typing import Literal, Sequence, get_args
 
 import cv2
-import layout
-import matplotlib.pyplot as plt
+from text_recog import layout
 import pandas as pd
 import pytesseract
+import os
+import sys
 
 JSON, CSV, EXCEL, TEXT = (
     Literal["json"],
@@ -14,6 +15,17 @@ JSON, CSV, EXCEL, TEXT = (
     Literal["text"],
 )
 
+def get_tesseract_path():
+    if getattr(sys, 'frozen', False):
+        # Running as PyInstaller bundle
+        base_path = sys._MEIPASS
+        return os.path.join(base_path, 'tesseract', 'tesseract')
+    else:
+        # Running as normal Python script
+        return 'tesseract'  # Assumes tesseract is in PATH
+
+# Set the tesseract command path
+pytesseract.pytesseract.tesseract_cmd = get_tesseract_path()
 
 class MagazineLayoutAnalyzer:
     def __init__(self, image_path: Path):
@@ -32,10 +44,7 @@ class MagazineLayoutAnalyzer:
         data: pd.DataFrame = pytesseract.image_to_data(
             self.image, lang="pol+eng+deu", output_type=pytesseract.Output.DATAFRAME
         )
-
-        from layout import df_to_layout
-
-        pages = df_to_layout(data)
+        pages = layout.df_to_layout(data)
 
         return pages
 
@@ -46,13 +55,13 @@ class MagazineLayoutAnalyzer:
         :param blocks:
         :param analysis_save_path:
         """
+        import matplotlib.pyplot as plt
         fig, axes = plt.subplots(1, 2, figsize=(18, 12))
 
         # Original image
         axes[0].imshow(cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB))
         axes[0].set_title("Original Image")
         axes[0].axis("off")
-
 
         img_tesseract = self.add_block_overlay(blocks)
 
@@ -126,13 +135,13 @@ class MagazineLayoutAnalyzer:
         transcripts_dir: Path,
         blocks: dict[int, layout.Block],
         ignore_blank_blocks: bool = False,
-        formats: Sequence[Literal[JSON, CSV, EXCEL, TEXT]] = (
-            JSON,
-            CSV,
-            EXCEL,
-            TEXT,
+        formats: Sequence[Literal["json", "csv", "excel", "text"]] = (
+            "json",
+            "csv",
+            "excel",
+            "text",
         ),
-    ) -> dict[Literal[JSON, CSV, EXCEL, TEXT], Path]:
+    ) -> dict[Literal["json", "csv", "excel", "text"], Path]:
         """
 
         :param formats:
@@ -168,42 +177,42 @@ class MagazineLayoutAnalyzer:
         output_filename = f"{self.image_path.stem}_transcript"
 
         paths = {}
-        if JSON in formats:
+        if "json" in formats:
             json_output_dir = transcripts_dir / "json"
             json_output_dir.mkdir(exist_ok=True, parents=True)
             json_output_path = json_output_dir / f"{output_filename}.json"
             data_df.to_json(json_output_path, orient="records", indent=2)
-            paths[get_args(JSON)[0]] = json_output_path
+            paths["json"] = json_output_path
 
-        if CSV in formats:
+        if "csv" in formats:
             csv_output_dir = transcripts_dir / "csv"
             csv_output_dir.mkdir(exist_ok=True, parents=True)
             csv_output_path = csv_output_dir / f"{output_filename}.csv"
             data_df.to_csv(csv_output_path, index=False)
-            paths[get_args(CSV)[0]] = csv_output_path
+            paths["csv"] = csv_output_path
 
-        if EXCEL in formats:
+        if "excel" in formats:
             excel_output_dir = transcripts_dir / "excel"
             excel_output_dir.mkdir(exist_ok=True, parents=True)
             excel_output_path = excel_output_dir / f"{output_filename}.xlsx"
             data_df.to_excel(excel_output_path)
-            paths[get_args(EXCEL)[0]] = excel_output_path
+            paths["excel"] = excel_output_path
 
-        if TEXT in formats:
+        if "text" in formats:
             text_output_dir = transcripts_dir / "text"
             text_output_dir.mkdir(exist_ok=True, parents=True)
             text_output_path = text_output_dir / f"{output_filename}.txt"
             text_output_path.open("w").write("\n\n".join(full_text))
-            paths[get_args(TEXT)[0]] = text_output_path
+            paths["text"] = text_output_path
 
         return paths
 
 
 if __name__ == "__main__":
     # Initialize analyzer
-    samples_dir = Path("../../samples/magazines")
-    output_analysis_dir = Path("../../outputs/analysis")
-    output_transcripts_dir = Path("../../outputs/transcripts")
+    samples_dir = Path("magazines")
+    output_analysis_dir = Path("outputs/analysis")
+    output_transcripts_dir = Path("outputs/transcripts")
     output_analysis_dir.mkdir(parents=True, exist_ok=True)
     for file in samples_dir.glob("*.jpg"):
         cwd = Path(".")

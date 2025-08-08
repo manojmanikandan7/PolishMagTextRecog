@@ -1,6 +1,20 @@
+# Core dependencies
 opencv-python>=4.8.0
 pillow>=10.0.0
 pytesseract>=0.3.10
 pandas>=2.0.0
 matplotlib>=3.7.0
 openpyxl>=3.1.0
+
+# Build and packaging
+hatchling>=1.8.0
+pyinstaller>=5.0.0
+
+# Development tools
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+mypy>=1.0.0
+ruff>=0.1.0

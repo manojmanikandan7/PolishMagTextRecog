@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polish-magazine-text-recog"
+version = "0.1.0"
+description = "Interactive GUI application for transcribing Polish magazine images using OCR with user-selectable text regions"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Manoj Manikandan", email = "manoj140805@gmail.com"}
+]
+keywords = ["ocr", "text-recognition", "polish", "magazine", "gui", "tesseract"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "opencv-python>=4.8.0",
+    "pillow>=10.0.0",
+    "pytesseract>=0.3.10",
+    "pandas>=2.0.0",
+    "matplotlib>=3.7.0",
+    "openpyxl>=3.1.0",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=5.0.0",
+    "hatchling>=1.8.0",
+]
+
+[project.urls]
+Repository = "https://github.com/manojmanikandan7/PolishMagTextRecog"
+Issues = "https://github.com/manojmanikandan7/PolishMagTextRecog/issues"
+
+[project.scripts]
+polish-magazine-transcriber = "src.text_recog.:main"
+
+[project.gui-scripts]
+polish-magazine-transcriber-gui = "src.text_recog.interactive_transcriber:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/text_recog"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/samples",
+    "/outputs",
+    "/README.md",
+    "/requirements.txt",
+    "/pyproject.toml",
+]
+
+[tool.pyinstaller]
+# PyInstaller configuration for creating standalone executable
+app-name = "PolishMagazineTranscriber"
+app-version = "0.1.0"
+app-description = "Interactive GUI application for transcribing Polish magazine images"
+main-script = "src/text_recog/interactive_transcriber.py"
+hidden-imports = [
+    "cv2",
+    "PIL",
+    "pytesseract",
+    "pandas",
+    "openpyxl",
+    "tkinter",
+    "tkinter.ttk",
+    "tkinter.filedialog",
+    "tkinter.messagebox",
+]
+
+onefile = true
+windowed = true
+console = false

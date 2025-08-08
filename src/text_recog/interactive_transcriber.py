@@ -5,9 +5,9 @@ from tkinter import filedialog, messagebox, ttk
 import cv2
 from PIL import Image, ImageTk
 
-from segment import MagazineLayoutAnalyzer
+from text_recog.segment import MagazineLayoutAnalyzer
 
-SAMPLES_DIR = Path("samples/magazines")
+SAMPLES_DIR = Path("samples")
 DEFAULT_ZOOM_LEVEL = 0.5
 
 
