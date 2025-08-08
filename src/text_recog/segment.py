@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Sequence, get_args
+from typing import Literal, Sequence
 
 import cv2
 from text_recog import layout
@@ -8,24 +8,22 @@ import pytesseract
 import os
 import sys
 
-JSON, CSV, EXCEL, TEXT = (
-    Literal["json"],
-    Literal["csv"],
-    Literal["excel"],
-    Literal["text"],
-)
+
+LANG = "pol+eng+deu"
 
 def get_tesseract_path():
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         # Running as PyInstaller bundle
         base_path = sys._MEIPASS
-        return os.path.join(base_path, 'tesseract', 'tesseract')
+        return os.path.join(base_path, "tesseract", "tesseract")
     else:
         # Running as normal Python script
-        return 'tesseract'  # Assumes tesseract is in PATH
+        return "tesseract"  # Assumes tesseract is in the PATH
+
 
 # Set the tesseract command path
 pytesseract.pytesseract.tesseract_cmd = get_tesseract_path()
+
 
 class MagazineLayoutAnalyzer:
     def __init__(self, image_path: Path):
@@ -42,7 +40,7 @@ class MagazineLayoutAnalyzer:
 
         # Get detailed data from Tesseract
         data: pd.DataFrame = pytesseract.image_to_data(
-            self.image, lang="pol+eng+deu", output_type=pytesseract.Output.DATAFRAME
+            self.image, lang=LANG, output_type=pytesseract.Output.DATAFRAME
         )
         pages = layout.df_to_layout(data)
 
@@ -56,6 +54,7 @@ class MagazineLayoutAnalyzer:
         :param analysis_save_path:
         """
         import matplotlib.pyplot as plt
+
         fig, axes = plt.subplots(1, 2, figsize=(18, 12))
 
         # Original image
@@ -195,7 +194,7 @@ class MagazineLayoutAnalyzer:
             excel_output_dir = transcripts_dir / "excel"
             excel_output_dir.mkdir(exist_ok=True, parents=True)
             excel_output_path = excel_output_dir / f"{output_filename}.xlsx"
-            data_df.to_excel(excel_output_path)
+            data_df.to_excel(excel_output_path, index=False)
             paths["excel"] = excel_output_path
 
         if "text" in formats:
