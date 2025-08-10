@@ -1,6 +1,7 @@
 # Interactive Magazine Transcriber
 
 An interactive GUI application for transcribing Polish magazine images using OCR with user-selectable text regions.
+Primarily built on the [Google's tesseract-ocr engine](https://github.com/tesseract-ocr/tesseract) and [pytesseract](https://github.com/madmaze/pytesseract)
 
 ## Features
 
