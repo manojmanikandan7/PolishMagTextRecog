@@ -7,6 +7,7 @@ import pandas as pd
 import pytesseract
 import os
 import sys
+import platform
 
 
 LANG = "pol+eng+deu"
@@ -16,8 +17,11 @@ def get_tesseract_path():
         # Running as PyInstaller bundle
         base_path = sys._MEIPASS
         return os.path.join(base_path, "tesseract", "tesseract")
+    elif platform.system() == "Windows":
+        # Running as normal script on Windows
+        return "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
     else:
-        # Running as normal Python script
+        # Running as normal script on other OS
         return "tesseract"  # Assumes tesseract is in the PATH
 
 
@@ -201,7 +205,7 @@ class MagazineLayoutAnalyzer:
             text_output_dir = transcripts_dir / "text"
             text_output_dir.mkdir(exist_ok=True, parents=True)
             text_output_path = text_output_dir / f"{output_filename}.txt"
-            text_output_path.open("w").write("\n\n".join(full_text))
+            text_output_path.open("w", encoding="utf-8").write("\n\n".join(full_text))
             paths["text"] = text_output_path
 
         return paths

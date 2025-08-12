@@ -4,10 +4,17 @@ from tkinter import filedialog, messagebox, ttk
 
 import cv2
 from PIL import Image, ImageTk
+import sys
 
 from text_recog.segment import MagazineLayoutAnalyzer
 
-SAMPLES_DIR = Path("samples")
+if getattr(sys, "frozen", False):
+    # Running as PyInstaller bundle
+    base_path = sys._MEIPASS
+    SAMPLES_DIR = Path(base_path)/"samples"/"samples"
+else:
+    # Running as normal Python script
+    SAMPLES_DIR = Path("samples")
 DEFAULT_ZOOM_LEVEL = 0.5
 
 
