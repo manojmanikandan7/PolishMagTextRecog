@@ -3,6 +3,10 @@
 An interactive GUI application for transcribing Polish magazine images using OCR with user-selectable text regions.
 Primarily built on the [Google's tesseract-ocr engine](https://github.com/tesseract-ocr/tesseract) and [pytesseract](https://github.com/madmaze/pytesseract)
 
+## License Notice
+
+[tesseract-ocr](https://github.com/tesseract-ocr/tesseract) and [pytesseract](https://github.com/madmaze/pytesseract) are licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0), a copy of which can be found at [APACHE_2.0_LICENSE](APACHE_2.0_LICENSE).
+
 ## Features
 
 - **Interactive GUI**: User-friendly interface built with tkinter
