@@ -60,6 +60,8 @@ include = [
     "/samples",
     "/outputs",
     "/README.md",
+    "/LICENSE",
+    "/APACHE_2.0_LICENSE",
     "/requirements.txt",
     "/pyproject.toml",
 ]
