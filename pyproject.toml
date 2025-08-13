@@ -4,28 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "polish-magazine-text-recog"
-version = "0.1.0"
+version = "0.0.1"
 description = "Interactive GUI application for transcribing Polish magazine images using OCR with user-selectable text regions"
 readme = "README.md"
-license = {text = "MIT"}
+license = {file = "LICENSE"}
 authors = [
     {name = "Manoj Manikandan", email = "manoj140805@gmail.com"}
 ]
-keywords = ["ocr", "text-recognition", "polish", "magazine", "gui", "tesseract"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Education",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "opencv-python>=4.8.0",
     "pillow>=10.0.0",
@@ -69,7 +63,7 @@ include = [
 [tool.pyinstaller]
 # PyInstaller configuration for creating standalone executable
 app-name = "PolishMagazineTranscriber"
-app-version = "0.1.0"
+app-version = "0.0.1"
 app-description = "Interactive GUI application for transcribing Polish magazine images"
 main-script = "src/text_recog/interactive_transcriber.py"
 hidden-imports = [
